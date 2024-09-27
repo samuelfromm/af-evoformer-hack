@@ -74,7 +74,9 @@ class RunAlphafoldTest(parameterized.TestCase):
         model_runners={'model1': model_runner_mock},
         amber_relaxer=amber_relaxer_mock if do_relax else None,
         benchmark=False,
-        random_seed=0)
+        random_seed=0,
+        run_feature_only=False
+        )
 
     base_output_files = os.listdir(out_dir)
     self.assertIn('target.fasta', base_output_files)

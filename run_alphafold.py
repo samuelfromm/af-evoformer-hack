@@ -44,90 +44,194 @@ import numpy as np
 logging.set_verbosity(logging.INFO)
 
 flags.DEFINE_list(
-    'fasta_paths', None, 'Paths to FASTA files, each containing a prediction '
-    'target that will be folded one after another. If a FASTA file contains '
-    'multiple sequences, then it will be folded as a multimer. Paths should be '
-    'separated by commas. All FASTA paths must have a unique basename as the '
-    'basename is used to name the output directories for each prediction.')
+    "fasta_paths",
+    None,
+    "Paths to FASTA files, each containing a prediction "
+    "target that will be folded one after another. If a FASTA file contains "
+    "multiple sequences, then it will be folded as a multimer. Paths should be "
+    "separated by commas. All FASTA paths must have a unique basename as the "
+    "basename is used to name the output directories for each prediction.",
+)
 
-flags.DEFINE_string('data_dir', None, 'Path to directory of supporting data.')
-flags.DEFINE_string('output_dir', None, 'Path to a directory that will '
-                    'store the results.')
-flags.DEFINE_string('jackhmmer_binary_path', shutil.which('jackhmmer'),
-                    'Path to the JackHMMER executable.')
-flags.DEFINE_string('hhblits_binary_path', shutil.which('hhblits'),
-                    'Path to the HHblits executable.')
-flags.DEFINE_string('hhsearch_binary_path', shutil.which('hhsearch'),
-                    'Path to the HHsearch executable.')
-flags.DEFINE_string('hmmsearch_binary_path', shutil.which('hmmsearch'),
-                    'Path to the hmmsearch executable.')
-flags.DEFINE_string('hmmbuild_binary_path', shutil.which('hmmbuild'),
-                    'Path to the hmmbuild executable.')
-flags.DEFINE_string('kalign_binary_path', shutil.which('kalign'),
-                    'Path to the Kalign executable.')
-flags.DEFINE_string('uniref90_database_path', None, 'Path to the Uniref90 '
-                    'database for use by JackHMMER.')
-flags.DEFINE_string('mgnify_database_path', None, 'Path to the MGnify '
-                    'database for use by JackHMMER.')
-flags.DEFINE_string('bfd_database_path', None, 'Path to the BFD '
-                    'database for use by HHblits.')
-flags.DEFINE_string('small_bfd_database_path', None, 'Path to the small '
-                    'version of BFD used with the "reduced_dbs" preset.')
-flags.DEFINE_string('uniref30_database_path', None, 'Path to the UniRef30 '
-                    'database for use by HHblits.')
-flags.DEFINE_string('uniprot_database_path', None, 'Path to the Uniprot '
-                    'database for use by JackHMMer.')
-flags.DEFINE_string('pdb70_database_path', None, 'Path to the PDB70 '
-                    'database for use by HHsearch.')
-flags.DEFINE_string('pdb_seqres_database_path', None, 'Path to the PDB '
-                    'seqres database for use by hmmsearch.')
-flags.DEFINE_string('template_mmcif_dir', None, 'Path to a directory with '
-                    'template mmCIF structures, each named <pdb_id>.cif')
-flags.DEFINE_string('max_template_date', None, 'Maximum template release date '
-                    'to consider. Important if folding historical test sets.')
-flags.DEFINE_string('obsolete_pdbs_path', None, 'Path to file containing a '
-                    'mapping from obsolete PDB IDs to the PDB IDs of their '
-                    'replacements.')
-flags.DEFINE_enum('db_preset', 'full_dbs',
-                  ['full_dbs', 'reduced_dbs'],
-                  'Choose preset MSA database configuration - '
-                  'smaller genetic database config (reduced_dbs) or '
-                  'full genetic database config  (full_dbs)')
-flags.DEFINE_enum('model_preset', 'monomer',
-                  ['monomer', 'monomer_casp14', 'monomer_ptm', 'multimer'],
-                  'Choose preset model configuration - the monomer model, '
-                  'the monomer model with extra ensembling, monomer model with '
-                  'pTM head, or multimer model')
-flags.DEFINE_boolean('benchmark', False, 'Run multiple JAX model evaluations '
-                     'to obtain a timing that excludes the compilation time, '
-                     'which should be more indicative of the time required for '
-                     'inferencing many proteins.')
-flags.DEFINE_integer('random_seed', None, 'The random seed for the data '
-                     'pipeline. By default, this is randomly generated. Note '
-                     'that even if this is set, Alphafold may still not be '
-                     'deterministic, because processes like GPU inference are '
-                     'nondeterministic.')
-flags.DEFINE_integer('num_multimer_predictions_per_model', 5, 'How many '
-                     'predictions (each with a different random seed) will be '
-                     'generated per model. E.g. if this is 2 and there are 5 '
-                     'models then there will be 10 predictions per input. '
-                     'Note: this FLAG only applies if model_preset=multimer')
-flags.DEFINE_boolean('use_precomputed_msas', False, 'Whether to read MSAs that '
-                     'have been written to disk instead of running the MSA '
-                     'tools. The MSA files are looked up in the output '
-                     'directory, so it must stay the same between multiple '
-                     'runs that are to reuse the MSAs. WARNING: This will not '
-                     'check if the sequence, database or configuration have '
-                     'changed.')
-flags.DEFINE_boolean('run_relax', True, 'Whether to run the final relaxation '
-                     'step on the predicted models. Turning relax off might '
-                     'result in predictions with distracting stereochemical '
-                     'violations but might help in case you are having issues '
-                     'with the relaxation stage.')
-flags.DEFINE_boolean('use_gpu_relax', None, 'Whether to relax on GPU. '
-                     'Relax on GPU can be much faster than CPU, so it is '
-                     'recommended to enable if possible. GPUs must be available'
-                     ' if this setting is enabled.')
+flags.DEFINE_string("data_dir", None, "Path to directory of supporting data.")
+flags.DEFINE_string(
+    "output_dir", None, "Path to a directory that will " "store the results."
+)
+flags.DEFINE_string(
+    "jackhmmer_binary_path",
+    shutil.which("jackhmmer"),
+    "Path to the JackHMMER executable.",
+)
+flags.DEFINE_string(
+    "hhblits_binary_path", shutil.which("hhblits"), "Path to the HHblits executable."
+)
+flags.DEFINE_string(
+    "hhsearch_binary_path", shutil.which("hhsearch"), "Path to the HHsearch executable."
+)
+flags.DEFINE_string(
+    "hmmsearch_binary_path",
+    shutil.which("hmmsearch"),
+    "Path to the hmmsearch executable.",
+)
+flags.DEFINE_string(
+    "hmmbuild_binary_path", shutil.which("hmmbuild"), "Path to the hmmbuild executable."
+)
+flags.DEFINE_string(
+    "kalign_binary_path", shutil.which("kalign"), "Path to the Kalign executable."
+)
+flags.DEFINE_string(
+    "uniref90_database_path",
+    None,
+    "Path to the Uniref90 " "database for use by JackHMMER.",
+)
+flags.DEFINE_string(
+    "mgnify_database_path", None, "Path to the MGnify " "database for use by JackHMMER."
+)
+flags.DEFINE_string(
+    "bfd_database_path", None, "Path to the BFD " "database for use by HHblits."
+)
+flags.DEFINE_string(
+    "small_bfd_database_path",
+    None,
+    "Path to the small " 'version of BFD used with the "reduced_dbs" preset.',
+)
+flags.DEFINE_string(
+    "uniref30_database_path",
+    None,
+    "Path to the UniRef30 " "database for use by HHblits.",
+)
+flags.DEFINE_string(
+    "uniprot_database_path",
+    None,
+    "Path to the Uniprot " "database for use by JackHMMer.",
+)
+flags.DEFINE_string(
+    "pdb70_database_path", None, "Path to the PDB70 " "database for use by HHsearch."
+)
+flags.DEFINE_string(
+    "pdb_seqres_database_path",
+    None,
+    "Path to the PDB " "seqres database for use by hmmsearch.",
+)
+flags.DEFINE_string(
+    "template_mmcif_dir",
+    None,
+    "Path to a directory with " "template mmCIF structures, each named <pdb_id>.cif",
+)
+flags.DEFINE_string(
+    "max_template_date",
+    None,
+    "Maximum template release date "
+    "to consider. Important if folding historical test sets.",
+)
+flags.DEFINE_string(
+    "obsolete_pdbs_path",
+    None,
+    "Path to file containing a "
+    "mapping from obsolete PDB IDs to the PDB IDs of their "
+    "replacements.",
+)
+flags.DEFINE_enum(
+    "db_preset",
+    "full_dbs",
+    ["full_dbs", "reduced_dbs"],
+    "Choose preset MSA database configuration - "
+    "smaller genetic database config (reduced_dbs) or "
+    "full genetic database config  (full_dbs)",
+)
+flags.DEFINE_enum(
+    "model_preset",
+    "monomer",
+    config.MODEL_PRESETS.keys(),  # ['monomer', 'monomer_casp14', 'monomer_ptm', 'multimer'],
+    "Choose preset model configuration - the monomer model, "
+    "the monomer model with extra ensembling, monomer model with "
+    "pTM head, or multimer model",
+)
+flags.DEFINE_boolean(
+    "benchmark",
+    False,
+    "Run multiple JAX model evaluations "
+    "to obtain a timing that excludes the compilation time, "
+    "which should be more indicative of the time required for "
+    "inferencing many proteins.",
+)
+flags.DEFINE_integer(
+    "random_seed",
+    None,
+    "The random seed for the data "
+    "pipeline. By default, this is randomly generated. Note "
+    "that even if this is set, Alphafold may still not be "
+    "deterministic, because processes like GPU inference are "
+    "nondeterministic.",
+)
+flags.DEFINE_integer(
+    "num_multimer_predictions_per_model",
+    5,
+    "How many "
+    "predictions (each with a different random seed) will be "
+    "generated per model. E.g. if this is 2 and there are 5 "
+    "models then there will be 10 predictions per input. "
+    "Note: this FLAG only applies if model_preset=multimer",
+)
+flags.DEFINE_boolean(
+    "use_precomputed_msas",
+    False,
+    "Whether to read MSAs that "
+    "have been written to disk instead of running the MSA "
+    "tools. The MSA files are looked up in the output "
+    "directory, so it must stay the same between multiple "
+    "runs that are to reuse the MSAs. WARNING: This will not "
+    "check if the sequence, database or configuration have "
+    "changed.",
+)
+flags.DEFINE_boolean(
+    "run_relax",
+    True,
+    "Whether to run the final relaxation "
+    "step on the predicted models. Turning relax off might "
+    "result in predictions with distracting stereochemical "
+    "violations but might help in case you are having issues "
+    "with the relaxation stage.",
+)
+flags.DEFINE_boolean(
+    "use_gpu_relax",
+    None,
+    "Whether to relax on GPU. "
+    "Relax on GPU can be much faster than CPU, so it is "
+    "recommended to enable if possible. GPUs must be available"
+    " if this setting is enabled.",
+)
+
+flags.DEFINE_integer("n_parallel_msa", 1, "Number of parallel runs of MSA tools.")
+flags.DEFINE_boolean(
+    "run_feature_only", False, "Calculate MSA and template to generate feature"
+)
+
+# Added flags
+flags.DEFINE_string("msa_dir", "", "Path to a directory that will " "store the msas.")
+flags.DEFINE_integer("number_recycles", 3, "Number of recycles. ")
+flags.DEFINE_boolean(
+    "no_templates",
+    False,
+    "will not use any template, will be faster than filter by date",
+)
+flags.DEFINE_boolean("full_pickle", False, "If True, output all results.")
+flags.DEFINE_list(
+    "extra_evoformer_output_layers",
+    [],
+    "Layers of the evoformer which should be processed (input as a comma-separated list).",
+)
+flags.DEFINE_list(
+    "skip_evoformer_blocks",
+    [],
+    "Layers of the evoformer which will be skipped during the calculation (input as a comma-separated list).",
+)
+flags.DEFINE_boolean(
+    "run_only_pae_head",
+    False,
+    "If True, run only PredictedAlignedErrorHead (in particular we skip the structure module)",
+)
+
 
 FLAGS = flags.FLAGS
 
@@ -139,13 +243,13 @@ RELAX_EXCLUDE_RESIDUES = []
 RELAX_MAX_OUTER_ITERATIONS = 3
 
 
-def _check_flag(flag_name: str,
-                other_flag_name: str,
-                should_be_set: bool):
-  if should_be_set != bool(FLAGS[flag_name].value):
-    verb = 'be' if should_be_set else 'not be'
-    raise ValueError(f'{flag_name} must {verb} set when running with '
-                     f'"--{other_flag_name}={FLAGS[other_flag_name].value}".')
+def _check_flag(flag_name: str, other_flag_name: str, should_be_set: bool):
+    if should_be_set != bool(FLAGS[flag_name].value):
+        verb = "be" if should_be_set else "not be"
+        raise ValueError(
+            f"{flag_name} must {verb} set when running with "
+            f'"--{other_flag_name}={FLAGS[other_flag_name].value}".'
+        )
 
 
 def predict_structure(
@@ -156,277 +260,460 @@ def predict_structure(
     model_runners: Dict[str, model.RunModel],
     amber_relaxer: relax.AmberRelaxation,
     benchmark: bool,
-    random_seed: int):
-  """Predicts structure using AlphaFold for the given sequence."""
-  logging.info('Predicting %s', fasta_name)
-  timings = {}
-  output_dir = os.path.join(output_dir_base, fasta_name)
-  if not os.path.exists(output_dir):
-    os.makedirs(output_dir)
-  msa_output_dir = os.path.join(output_dir, 'msas')
-  if not os.path.exists(msa_output_dir):
-    os.makedirs(msa_output_dir)
+    random_seed: int,
+    run_feature_only,
+    run_only_pae_head: bool,
+):
+    """Predicts structure using AlphaFold for the given sequence."""
+    logging.info("Predicting %s", fasta_name)
+    timings = {}
+    output_dir = os.path.join(output_dir_base, fasta_name)
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
 
-  # Get features.
-  t_0 = time.time()
-  feature_dict = data_pipeline.process(
-      input_fasta_path=fasta_path,
-      msa_output_dir=msa_output_dir)
-  timings['features'] = time.time() - t_0
+    # save msas to seperate directory if flag is present
+    if FLAGS.msa_dir != "":
+        msa_output_dir = os.path.join(FLAGS.msa_dir, fasta_name, "msas")
+    else:
+        msa_output_dir = os.path.join(output_dir, "msas")
 
-  # Write out features as a pickled dictionary.
-  features_output_path = os.path.join(output_dir, 'features.pkl')
-  with open(features_output_path, 'wb') as f:
-    pickle.dump(feature_dict, f, protocol=4)
+    if not os.path.exists(msa_output_dir):
+        os.makedirs(msa_output_dir)
 
-  unrelaxed_pdbs = {}
-  relaxed_pdbs = {}
-  relax_metrics = {}
-  ranking_confidences = {}
-
-  # Run the models.
-  num_models = len(model_runners)
-  for model_index, (model_name, model_runner) in enumerate(
-      model_runners.items()):
-    logging.info('Running model %s on %s', model_name, fasta_name)
+    # Get features.
     t_0 = time.time()
-    model_random_seed = model_index + random_seed * num_models
-    processed_feature_dict = model_runner.process_features(
-        feature_dict, random_seed=model_random_seed)
-    timings[f'process_features_{model_name}'] = time.time() - t_0
+    features_output_path = os.path.join(output_dir, "features.pkl")
 
-    t_0 = time.time()
-    prediction_result = model_runner.predict(processed_feature_dict,
-                                             random_seed=model_random_seed)
-    t_diff = time.time() - t_0
-    timings[f'predict_and_compile_{model_name}'] = t_diff
-    logging.info(
-        'Total JAX model %s on %s predict time (includes compilation time, see --benchmark): %.1fs',
-        model_name, fasta_name, t_diff)
+    # If we already have feature.pkl file, skip the MSA and template finding step
+    if os.path.exists(features_output_path):
+        feature_dict = pickle.load(open(features_output_path, "rb"))
 
-    if benchmark:
-      t_0 = time.time()
-      model_runner.predict(processed_feature_dict,
-                           random_seed=model_random_seed)
-      t_diff = time.time() - t_0
-      timings[f'predict_benchmark_{model_name}'] = t_diff
-      logging.info(
-          'Total JAX model %s on %s predict time (excludes compilation time): %.1fs',
-          model_name, fasta_name, t_diff)
+    else:
+        feature_dict = data_pipeline.process(
+            input_fasta_path=fasta_path, msa_output_dir=msa_output_dir
+        )
 
-    plddt = prediction_result['plddt']
-    ranking_confidences[model_name] = prediction_result['ranking_confidence']
+    # Write out features as a pickled dictionary.
+    features_output_path = os.path.join(output_dir, "features.pkl")
+    with open(features_output_path, "wb") as f:
+        pickle.dump(feature_dict, f, protocol=4)
 
-    # Save the model outputs.
-    result_output_path = os.path.join(output_dir, f'result_{model_name}.pkl')
-    with open(result_output_path, 'wb') as f:
-      pickle.dump(prediction_result, f, protocol=4)
+    timings["features"] = time.time() - t_0
 
-    # Add the predicted LDDT in the b-factor column.
-    # Note that higher predicted LDDT value means higher model confidence.
-    plddt_b_factors = np.repeat(
-        plddt[:, None], residue_constants.atom_type_num, axis=-1)
-    unrelaxed_protein = protein.from_prediction(
-        features=processed_feature_dict,
-        result=prediction_result,
-        b_factors=plddt_b_factors,
-        remove_leading_feature_dimension=not model_runner.multimer_mode)
+    if run_feature_only:  # if not run_feature, skip the rest of the function
+        logging.info("Only MSA and template searches COMPLETE. Skipping predictions.")
+        return 0
 
-    unrelaxed_pdbs[model_name] = protein.to_pdb(unrelaxed_protein)
-    unrelaxed_pdb_path = os.path.join(output_dir, f'unrelaxed_{model_name}.pdb')
-    with open(unrelaxed_pdb_path, 'w') as f:
-      f.write(unrelaxed_pdbs[model_name])
+    unrelaxed_pdbs = {}
+    relaxed_pdbs = {}
+    relax_metrics = {}
+    ranking_confidences = {}
 
+    # Run the models.
+    num_models = len(model_runners)
+    for model_index, (model_name, model_runner) in enumerate(model_runners.items()):
+        logging.info("Running model %s on %s", model_name, fasta_name)
+        t_0 = time.time()
+        model_random_seed = model_index + random_seed * num_models
+        processed_feature_dict = model_runner.process_features(
+            feature_dict, random_seed=model_random_seed
+        )
+        timings[f"process_features_{model_name}"] = time.time() - t_0
+
+        t_0 = time.time()
+        prediction_result = model_runner.predict(
+            processed_feature_dict, random_seed=model_random_seed
+        )
+        t_diff = time.time() - t_0
+        timings[f"predict_and_compile_{model_name}"] = t_diff
+        logging.info(
+            "Total JAX model %s on %s predict time (includes compilation time, see --benchmark): %.1fs",
+            model_name,
+            fasta_name,
+            t_diff,
+        )
+
+        if benchmark:
+            t_0 = time.time()
+            model_runner.predict(processed_feature_dict, random_seed=model_random_seed)
+            t_diff = time.time() - t_0
+            timings[f"predict_benchmark_{model_name}"] = t_diff
+            logging.info(
+                "Total JAX model %s on %s predict time (excludes compilation time): %.1fs",
+                model_name,
+                fasta_name,
+                t_diff,
+            )
+
+        # Save the model outputs.
+        result_output_path = os.path.join(output_dir, f"result_{model_name}.pkl")
+        if FLAGS.full_pickle:
+            with open(result_output_path, "wb") as f:
+                pickle.dump(prediction_result, f, protocol=4)
+        else:
+            all_keys = prediction_result.keys()
+            keys_to_remove = [
+                key
+                for key in all_keys
+                if key.startswith(
+                    tuple(
+                        [
+                            "distogram",
+                            "experimentally_resolved",
+                            "masked_msa",
+                            "aligned_confidence_probs",
+                        ]
+                    )
+                )
+            ]
+            d = {}
+            for k in prediction_result.keys():
+                if k not in keys_to_remove:
+                    d[k] = prediction_result[k]
+            with open(result_output_path, "wb") as f:
+                pickle.dump(d, f, protocol=4)
+
+        if run_only_pae_head:
+            logging.info("Final timings for %s: %s", fasta_name, timings)
+            timings_output_path = os.path.join(output_dir, "timings.json")
+            with open(timings_output_path, "w") as f:
+                f.write(json.dumps(timings, indent=4))
+            return 0
+
+        plddt = prediction_result["plddt"]
+        ranking_confidences[model_name] = prediction_result["ranking_confidence"]
+
+        # Add the predicted LDDT in the b-factor column.
+        # Note that higher predicted LDDT value means higher model confidence.
+        plddt_b_factors = np.repeat(
+            plddt[:, None], residue_constants.atom_type_num, axis=-1
+        )
+        unrelaxed_protein = protein.from_prediction(
+            features=processed_feature_dict,
+            result=prediction_result,
+            b_factors=plddt_b_factors,
+            remove_leading_feature_dimension=not model_runner.multimer_mode,
+        )
+
+        unrelaxed_pdbs[model_name] = protein.to_pdb(unrelaxed_protein)
+        unrelaxed_pdb_path = os.path.join(output_dir, f"unrelaxed_{model_name}.pdb")
+        with open(unrelaxed_pdb_path, "w") as f:
+            f.write(unrelaxed_pdbs[model_name])
+
+        if amber_relaxer:
+            # Relax the prediction.
+            t_0 = time.time()
+            relaxed_pdb_str, _, violations = amber_relaxer.process(
+                prot=unrelaxed_protein
+            )
+            relax_metrics[model_name] = {
+                "remaining_violations": violations,
+                "remaining_violations_count": sum(violations),
+            }
+            timings[f"relax_{model_name}"] = time.time() - t_0
+
+            relaxed_pdbs[model_name] = relaxed_pdb_str
+
+            # Save the relaxed PDB.
+            relaxed_output_path = os.path.join(output_dir, f"relaxed_{model_name}.pdb")
+            with open(relaxed_output_path, "w") as f:
+                f.write(relaxed_pdb_str)
+
+        for (
+            i
+        ) in (
+            config.CONFIG_MULTIMER.model.embeddings_and_evoformer.extra_evoformer_output_layers
+        ):
+            layer_prediction_result = {}
+            layer_prediction_result["structure_module"] = prediction_result[
+                f"structure_module_layer{i}"
+            ]
+            layer_plddt = prediction_result[f"plddt_layer{i}"]
+
+            # Add the predicted LDDT in the b-factor column.
+            # Note that higher predicted LDDT value means higher model confidence.
+            layer_plddt_b_factors = np.repeat(
+                layer_plddt[:, None], residue_constants.atom_type_num, axis=-1
+            )
+            unrelaxed_protein = protein.from_prediction(
+                features=processed_feature_dict,
+                result=layer_prediction_result,
+                b_factors=layer_plddt_b_factors,
+                remove_leading_feature_dimension=not model_runner.multimer_mode,
+            )
+
+            layer_unrelaxed_pdb = protein.to_pdb(unrelaxed_protein)
+            unrelaxed_pdb_path = os.path.join(
+                output_dir, f"unrelaxed_{model_name}_layer{i}.pdb"
+            )
+            with open(unrelaxed_pdb_path, "w") as f:
+                f.write(layer_unrelaxed_pdb)
+
+            if amber_relaxer:
+                # Relax the prediction.
+                t_0 = time.time()
+                relaxed_pdb_str, _, violations = amber_relaxer.process(
+                    prot=unrelaxed_protein
+                )
+
+                # Save the relaxed PDB.
+                relaxed_output_path = os.path.join(
+                    output_dir, f"relaxed_{model_name}_layer{i}.pdb"
+                )
+                with open(relaxed_output_path, "w") as f:
+                    f.write(relaxed_pdb_str)
+
+    # Rank by model confidence and write out relaxed PDBs in rank order.
+    ranked_order = []
+    for idx, (model_name, _) in enumerate(
+        sorted(ranking_confidences.items(), key=lambda x: x[1], reverse=True)
+    ):
+        ranked_order.append(model_name)
+        ranked_output_path = os.path.join(output_dir, f"ranked_{idx}.pdb")
+        with open(ranked_output_path, "w") as f:
+            if amber_relaxer:
+                f.write(relaxed_pdbs[model_name])
+            else:
+                f.write(unrelaxed_pdbs[model_name])
+
+    ranking_output_path = os.path.join(output_dir, "ranking_debug.json")
+    with open(ranking_output_path, "w") as f:
+        label = "iptm+ptm" if "iptm" in prediction_result else "plddts"
+        f.write(
+            json.dumps({label: ranking_confidences, "order": ranked_order}, indent=4)
+        )
+
+    logging.info("Final timings for %s: %s", fasta_name, timings)
+
+    timings_output_path = os.path.join(output_dir, "timings.json")
+    with open(timings_output_path, "w") as f:
+        f.write(json.dumps(timings, indent=4))
     if amber_relaxer:
-      # Relax the prediction.
-      t_0 = time.time()
-      relaxed_pdb_str, _, violations = amber_relaxer.process(
-          prot=unrelaxed_protein)
-      relax_metrics[model_name] = {
-          'remaining_violations': violations,
-          'remaining_violations_count': sum(violations)
-      }
-      timings[f'relax_{model_name}'] = time.time() - t_0
-
-      relaxed_pdbs[model_name] = relaxed_pdb_str
-
-      # Save the relaxed PDB.
-      relaxed_output_path = os.path.join(
-          output_dir, f'relaxed_{model_name}.pdb')
-      with open(relaxed_output_path, 'w') as f:
-        f.write(relaxed_pdb_str)
-
-  # Rank by model confidence and write out relaxed PDBs in rank order.
-  ranked_order = []
-  for idx, (model_name, _) in enumerate(
-      sorted(ranking_confidences.items(), key=lambda x: x[1], reverse=True)):
-    ranked_order.append(model_name)
-    ranked_output_path = os.path.join(output_dir, f'ranked_{idx}.pdb')
-    with open(ranked_output_path, 'w') as f:
-      if amber_relaxer:
-        f.write(relaxed_pdbs[model_name])
-      else:
-        f.write(unrelaxed_pdbs[model_name])
-
-  ranking_output_path = os.path.join(output_dir, 'ranking_debug.json')
-  with open(ranking_output_path, 'w') as f:
-    label = 'iptm+ptm' if 'iptm' in prediction_result else 'plddts'
-    f.write(json.dumps(
-        {label: ranking_confidences, 'order': ranked_order}, indent=4))
-
-  logging.info('Final timings for %s: %s', fasta_name, timings)
-
-  timings_output_path = os.path.join(output_dir, 'timings.json')
-  with open(timings_output_path, 'w') as f:
-    f.write(json.dumps(timings, indent=4))
-  if amber_relaxer:
-    relax_metrics_path = os.path.join(output_dir, 'relax_metrics.json')
-    with open(relax_metrics_path, 'w') as f:
-      f.write(json.dumps(relax_metrics, indent=4))
+        relax_metrics_path = os.path.join(output_dir, "relax_metrics.json")
+        with open(relax_metrics_path, "w") as f:
+            f.write(json.dumps(relax_metrics, indent=4))
 
 
 def main(argv):
-  if len(argv) > 1:
-    raise app.UsageError('Too many command-line arguments.')
+    if len(argv) > 1:
+        raise app.UsageError("Too many command-line arguments.")
 
-  for tool_name in (
-      'jackhmmer', 'hhblits', 'hhsearch', 'hmmsearch', 'hmmbuild', 'kalign'):
-    if not FLAGS[f'{tool_name}_binary_path'].value:
-      raise ValueError(f'Could not find path to the "{tool_name}" binary. Make '
-                       'sure it is installed on your system.')
+    for tool_name in (
+        "jackhmmer",
+        "hhblits",
+        "hhsearch",
+        "hmmsearch",
+        "hmmbuild",
+        "kalign",
+    ):
+        if not FLAGS[f"{tool_name}_binary_path"].value:
+            raise ValueError(
+                f'Could not find path to the "{tool_name}" binary. Make '
+                "sure it is installed on your system."
+            )
 
-  use_small_bfd = FLAGS.db_preset == 'reduced_dbs'
-  _check_flag('small_bfd_database_path', 'db_preset',
-              should_be_set=use_small_bfd)
-  _check_flag('bfd_database_path', 'db_preset',
-              should_be_set=not use_small_bfd)
-  _check_flag('uniref30_database_path', 'db_preset',
-              should_be_set=not use_small_bfd)
+    use_small_bfd = FLAGS.db_preset == "reduced_dbs"
+    _check_flag("small_bfd_database_path", "db_preset", should_be_set=use_small_bfd)
+    _check_flag("bfd_database_path", "db_preset", should_be_set=not use_small_bfd)
+    _check_flag("uniref30_database_path", "db_preset", should_be_set=not use_small_bfd)
 
-  run_multimer_system = 'multimer' in FLAGS.model_preset
-  _check_flag('pdb70_database_path', 'model_preset',
-              should_be_set=not run_multimer_system)
-  _check_flag('pdb_seqres_database_path', 'model_preset',
-              should_be_set=run_multimer_system)
-  _check_flag('uniprot_database_path', 'model_preset',
-              should_be_set=run_multimer_system)
+    run_multimer_system = "multimer" in FLAGS.model_preset
+    _check_flag(
+        "pdb70_database_path", "model_preset", should_be_set=not run_multimer_system
+    )
+    _check_flag(
+        "pdb_seqres_database_path", "model_preset", should_be_set=run_multimer_system
+    )
+    _check_flag(
+        "uniprot_database_path", "model_preset", should_be_set=run_multimer_system
+    )
 
-  if FLAGS.model_preset == 'monomer_casp14':
-    num_ensemble = 8
-  else:
-    num_ensemble = 1
-
-  # Check for duplicate FASTA file names.
-  fasta_names = [pathlib.Path(p).stem for p in FLAGS.fasta_paths]
-  if len(fasta_names) != len(set(fasta_names)):
-    raise ValueError('All FASTA paths must have a unique basename.')
-
-  if run_multimer_system:
-    template_searcher = hmmsearch.Hmmsearch(
-        binary_path=FLAGS.hmmsearch_binary_path,
-        hmmbuild_binary_path=FLAGS.hmmbuild_binary_path,
-        database_path=FLAGS.pdb_seqres_database_path)
-    template_featurizer = templates.HmmsearchHitFeaturizer(
-        mmcif_dir=FLAGS.template_mmcif_dir,
-        max_template_date=FLAGS.max_template_date,
-        max_hits=MAX_TEMPLATE_HITS,
-        kalign_binary_path=FLAGS.kalign_binary_path,
-        release_dates_path=None,
-        obsolete_pdbs_path=FLAGS.obsolete_pdbs_path)
-  else:
-    template_searcher = hhsearch.HHSearch(
-        binary_path=FLAGS.hhsearch_binary_path,
-        databases=[FLAGS.pdb70_database_path])
-    template_featurizer = templates.HhsearchHitFeaturizer(
-        mmcif_dir=FLAGS.template_mmcif_dir,
-        max_template_date=FLAGS.max_template_date,
-        max_hits=MAX_TEMPLATE_HITS,
-        kalign_binary_path=FLAGS.kalign_binary_path,
-        release_dates_path=None,
-        obsolete_pdbs_path=FLAGS.obsolete_pdbs_path)
-
-  monomer_data_pipeline = pipeline.DataPipeline(
-      jackhmmer_binary_path=FLAGS.jackhmmer_binary_path,
-      hhblits_binary_path=FLAGS.hhblits_binary_path,
-      uniref90_database_path=FLAGS.uniref90_database_path,
-      mgnify_database_path=FLAGS.mgnify_database_path,
-      bfd_database_path=FLAGS.bfd_database_path,
-      uniref30_database_path=FLAGS.uniref30_database_path,
-      small_bfd_database_path=FLAGS.small_bfd_database_path,
-      template_searcher=template_searcher,
-      template_featurizer=template_featurizer,
-      use_small_bfd=use_small_bfd,
-      use_precomputed_msas=FLAGS.use_precomputed_msas)
-
-  if run_multimer_system:
-    num_predictions_per_model = FLAGS.num_multimer_predictions_per_model
-    data_pipeline = pipeline_multimer.DataPipeline(
-        monomer_data_pipeline=monomer_data_pipeline,
-        jackhmmer_binary_path=FLAGS.jackhmmer_binary_path,
-        uniprot_database_path=FLAGS.uniprot_database_path,
-        use_precomputed_msas=FLAGS.use_precomputed_msas)
-  else:
-    num_predictions_per_model = 1
-    data_pipeline = monomer_data_pipeline
-
-  model_runners = {}
-  model_names = config.MODEL_PRESETS[FLAGS.model_preset]
-  for model_name in model_names:
-    model_config = config.model_config(model_name)
-    if run_multimer_system:
-      model_config.model.num_ensemble_eval = num_ensemble
+    if FLAGS.model_preset == "monomer_casp14":
+        num_ensemble = 8
     else:
-      model_config.data.eval.num_ensemble = num_ensemble
-    model_params = data.get_model_haiku_params(
-        model_name=model_name, data_dir=FLAGS.data_dir)
-    model_runner = model.RunModel(model_config, model_params)
-    for i in range(num_predictions_per_model):
-      model_runners[f'{model_name}_pred_{i}'] = model_runner
+        num_ensemble = 1
 
-  logging.info('Have %d models: %s', len(model_runners),
-               list(model_runners.keys()))
+    # Check for duplicate FASTA file names.
+    fasta_names = [pathlib.Path(p).stem for p in FLAGS.fasta_paths]
+    if len(fasta_names) != len(set(fasta_names)):
+        raise ValueError("All FASTA paths must have a unique basename.")
 
-  if FLAGS.run_relax:
-    amber_relaxer = relax.AmberRelaxation(
-        max_iterations=RELAX_MAX_ITERATIONS,
-        tolerance=RELAX_ENERGY_TOLERANCE,
-        stiffness=RELAX_STIFFNESS,
-        exclude_residues=RELAX_EXCLUDE_RESIDUES,
-        max_outer_iterations=RELAX_MAX_OUTER_ITERATIONS,
-        use_gpu=FLAGS.use_gpu_relax)
-  else:
-    amber_relaxer = None
+    if run_multimer_system:
+        template_searcher = hmmsearch.Hmmsearch(
+            binary_path=FLAGS.hmmsearch_binary_path,
+            hmmbuild_binary_path=FLAGS.hmmbuild_binary_path,
+            database_path=FLAGS.pdb_seqres_database_path,
+        )
+        template_featurizer = templates.HmmsearchHitFeaturizer(
+            mmcif_dir=FLAGS.template_mmcif_dir,
+            max_template_date=FLAGS.max_template_date,
+            max_hits=MAX_TEMPLATE_HITS,
+            kalign_binary_path=FLAGS.kalign_binary_path,
+            release_dates_path=None,
+            obsolete_pdbs_path=FLAGS.obsolete_pdbs_path,
+        )
+    else:
+        template_searcher = hhsearch.HHSearch(
+            binary_path=FLAGS.hhsearch_binary_path,
+            databases=[FLAGS.pdb70_database_path],
+        )
+        template_featurizer = templates.HhsearchHitFeaturizer(
+            mmcif_dir=FLAGS.template_mmcif_dir,
+            max_template_date=FLAGS.max_template_date,
+            max_hits=MAX_TEMPLATE_HITS,
+            kalign_binary_path=FLAGS.kalign_binary_path,
+            release_dates_path=None,
+            obsolete_pdbs_path=FLAGS.obsolete_pdbs_path,
+        )
 
-  random_seed = FLAGS.random_seed
-  if random_seed is None:
-    random_seed = random.randrange(sys.maxsize // len(model_runners))
-  logging.info('Using random seed %d for the data pipeline', random_seed)
+    monomer_data_pipeline = pipeline.DataPipeline(
+        jackhmmer_binary_path=FLAGS.jackhmmer_binary_path,
+        hhblits_binary_path=FLAGS.hhblits_binary_path,
+        uniref90_database_path=FLAGS.uniref90_database_path,
+        mgnify_database_path=FLAGS.mgnify_database_path,
+        bfd_database_path=FLAGS.bfd_database_path,
+        uniref30_database_path=FLAGS.uniref30_database_path,
+        small_bfd_database_path=FLAGS.small_bfd_database_path,
+        template_searcher=template_searcher,
+        template_featurizer=template_featurizer,
+        use_small_bfd=use_small_bfd,
+        use_precomputed_msas=FLAGS.use_precomputed_msas,
+        n_parallel_msa=FLAGS.n_parallel_msa,
+        no_templates=FLAGS.no_templates,
+    )
 
-  # Predict structure for each of the sequences.
-  for i, fasta_path in enumerate(FLAGS.fasta_paths):
-    fasta_name = fasta_names[i]
-    predict_structure(
-        fasta_path=fasta_path,
-        fasta_name=fasta_name,
-        output_dir_base=FLAGS.output_dir,
-        data_pipeline=data_pipeline,
-        model_runners=model_runners,
-        amber_relaxer=amber_relaxer,
-        benchmark=FLAGS.benchmark,
-        random_seed=random_seed)
+    if run_multimer_system:
+        num_predictions_per_model = FLAGS.num_multimer_predictions_per_model
+        data_pipeline = pipeline_multimer.DataPipeline(
+            monomer_data_pipeline=monomer_data_pipeline,
+            jackhmmer_binary_path=FLAGS.jackhmmer_binary_path,
+            uniprot_database_path=FLAGS.uniprot_database_path,
+            use_precomputed_msas=FLAGS.use_precomputed_msas,
+        )
+    else:
+        num_predictions_per_model = 1
+        data_pipeline = monomer_data_pipeline
+
+    # Update config for extra_evoformer_output_layers
+    extra_layers = FLAGS.extra_evoformer_output_layers
+    extra_layers = list(map(int, extra_layers))
+    extra_layers = set(extra_layers)
+    extra_layers = extra_layers.intersection(
+        set(
+            range(
+                0,
+                config.CONFIG_MULTIMER.model.embeddings_and_evoformer.evoformer_num_block
+                + 1,
+            )
+        )
+    )
+    extra_layers = list(extra_layers)
+    config.CONFIG_MULTIMER.model.embeddings_and_evoformer.extra_evoformer_output_layers = (
+        extra_layers
+    )
+    logging.info(
+        f"Extra evoformer output layers: {config.CONFIG_MULTIMER.model.embeddings_and_evoformer.extra_evoformer_output_layers}"
+    )
+    # Update config for skip_evoformer_blocks
+    skip_layers = FLAGS.skip_evoformer_blocks
+    skip_layers = list(map(int, skip_layers))
+    skip_layers = set(skip_layers)
+    skip_layers = skip_layers.intersection(
+        set(
+            range(
+                0,
+                config.CONFIG_MULTIMER.model.embeddings_and_evoformer.evoformer_num_block,
+            )
+        )
+    )
+    skip_layers = list(skip_layers)
+    config.CONFIG_MULTIMER.model.embeddings_and_evoformer.skip_evoformer_blocks = (
+        skip_layers
+    )
+    logging.info(
+        f"Skip evoformer calculation layers: {config.CONFIG_MULTIMER.model.embeddings_and_evoformer.skip_evoformer_blocks}"
+    )
+
+    # See flag run_only_pae_head
+    config.CONFIG_MULTIMER.model.run_only_pae_head = FLAGS.run_only_pae_head
+    if config.CONFIG_MULTIMER.model.run_only_pae_head:
+        logging.info(f"Using only the pae head.")
+        logging.info(f"Using no recycles.")
+        FLAGS.number_recycles = 0
+
+    model_runners = {}
+    model_names = config.MODEL_PRESETS[FLAGS.model_preset]
+    for model_name in model_names:
+        model_config = config.model_config(model_name)
+        if run_multimer_system:
+            model_config.model.num_ensemble_eval = num_ensemble
+        else:
+            model_config.data.eval.num_ensemble = num_ensemble
+
+        # see flag number_recycles
+        if FLAGS.number_recycles != 3:
+            logging.info(f"Setting number_recycles to {FLAGS.number_recycles}")
+            model_config.model.num_recycle = FLAGS.number_recycles
+            if not run_multimer_system:
+                model_config.data.common.num_recycle = FLAGS.number_recycles
+
+        model_params = data.get_model_haiku_params(
+            model_name=model_name, data_dir=FLAGS.data_dir
+        )
+        model_runner = model.RunModel(model_config, model_params)
+        for i in range(num_predictions_per_model):
+            model_runners[f"{model_name}_pred_{i}"] = model_runner
+
+    logging.info("Have %d models: %s", len(model_runners), list(model_runners.keys()))
+
+    if FLAGS.run_relax:
+        amber_relaxer = relax.AmberRelaxation(
+            max_iterations=RELAX_MAX_ITERATIONS,
+            tolerance=RELAX_ENERGY_TOLERANCE,
+            stiffness=RELAX_STIFFNESS,
+            exclude_residues=RELAX_EXCLUDE_RESIDUES,
+            max_outer_iterations=RELAX_MAX_OUTER_ITERATIONS,
+            use_gpu=FLAGS.use_gpu_relax,
+        )
+    else:
+        amber_relaxer = None
+
+    random_seed = FLAGS.random_seed
+    if random_seed is None:
+        random_seed = random.randrange(sys.maxsize // len(model_runners))
+    logging.info("Using random seed %d for the data pipeline", random_seed)
+
+    # Predict structure for each of the sequences.
+    for i, fasta_path in enumerate(FLAGS.fasta_paths):
+        fasta_name = fasta_names[i]
+        predict_structure(
+            fasta_path=fasta_path,
+            fasta_name=fasta_name,
+            output_dir_base=FLAGS.output_dir,
+            data_pipeline=data_pipeline,
+            model_runners=model_runners,
+            amber_relaxer=amber_relaxer,
+            benchmark=FLAGS.benchmark,
+            random_seed=random_seed,
+            run_feature_only=FLAGS.run_feature_only,
+            run_only_pae_head=FLAGS.run_only_pae_head,
+        )
+        logging.info("%s AlphaFold structure prediction COMPLETE", fasta_name)
 
 
-if __name__ == '__main__':
-  flags.mark_flags_as_required([
-      'fasta_paths',
-      'output_dir',
-      'data_dir',
-      'uniref90_database_path',
-      'mgnify_database_path',
-      'template_mmcif_dir',
-      'max_template_date',
-      'obsolete_pdbs_path',
-      'use_gpu_relax',
-  ])
+if __name__ == "__main__":
+    flags.mark_flags_as_required(
+        [
+            "fasta_paths",
+            "output_dir",
+            "data_dir",
+            "uniref90_database_path",
+            "mgnify_database_path",
+            "template_mmcif_dir",
+            "max_template_date",
+            "obsolete_pdbs_path",
+            "use_gpu_relax",
+        ]
+    )
 
-  app.run(main)
+    app.run(main)
